@@ -3,183 +3,653 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Bitcoin Price — Show 3y Back / 3y Forward</title>
+<title>Bitcoin Quant Dashboard — 3Y History / 3Y Scenario Forecast</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-<script>
-/* Inline minimal Chart.js subset loader via CDN fallback if blocked */
-</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
 <style>
-  :root { --bg:#0b0b0f; --card:#151823; --muted:#8b94a7; --text:#e7ecf5; --accent:#69d5a5; --warn:#f6c833; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#090a0f,#0f1320 40%,#0b0b0f); color:var(--text);}
-  .wrap { max-width:1200px; margin:40px auto; padding:0 16px; }
-  h1 { font-size: clamp(24px, 4vw, 34px); margin:0 0 8px; }
-  p.lead { color:var(--muted); margin:0 0 18px; }
-  .card { background: var(--card); border:1px solid #21263a; border-radius:16px; padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,.25);}
-  .controls { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; align-items:center; }
-  .control { background:#0f1220; border:1px solid #242a3f; border-radius:10px; padding:10px 12px; color:var(--text); }
-  label { font-size:12px; color:var(--muted); margin-right:6px; }
-  select{ background:#0f1220; border:1px solid #242a3f; border-radius:10px; padding:8px 10px; color:#e7ecf5; }
-  button.primary { background:var(--accent); color:#062b1b; border:none; border-radius:12px; padding:10px 14px; font-weight:800; cursor:pointer; }
-  button.ghost { background:transparent; border:1px solid #2a3050; color:#e7ecf5; border-radius:12px; padding:10px 14px; font-weight:600; cursor:pointer; }
-  .row { display:grid; grid-template-columns: 1.25fr .75fr; gap:16px; margin-top:16px; }
-  @media (max-width: 1100px) { .row { grid-template-columns: 1fr; } }
-  .statgrid { display:grid; grid-template-columns: repeat(4, minmax(150px,1fr)); gap:12px; margin-top:12px; }
-  .stat { background:#0f1220; border:1px solid #262c40; border-radius:12px; padding:10px; }
-  .stat b { display:block; font-size:12px; color:#aeb7cc; }
-  .stat span { font-size:16px; font-weight:700; }
-  code { background:#0f1220; padding:2px 6px; border-radius:6px; }
-  footer { color:var(--muted); font-size:12px; margin-top:14px; }
-  .muted { color:var(--muted); }
-  .smallgrid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
-  @media (max-width: 1100px) { .smallgrid { grid-template-columns: 1fr; } }
-  .grade { font-weight:800; }
+  :root{
+    --bg:#0b0f14;
+    --card:#101725;
+    --card2:#0d1420;
+    --border:#223045;
+    --text:#e8eef7;
+    --muted:#9aa8bf;
+    --muted2:#b8c3d6;
+    --accent:#7aa2ff;
+    --accent2:#2bb3a6;
+    --warn:#d6b25c;
+    --danger:#ff7b7b;
+    --shadow: 0 10px 28px rgba(0,0,0,.28);
+    --radius: 16px;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f7f9fc;
+      --card:#ffffff;
+      --card2:#ffffff;
+      --border:#dbe4f3;
+      --text:#111827;
+      --muted:#4b5563;
+      --muted2:#374151;
+      --accent:#2b59ff;
+      --accent2:#0f766e;
+      --warn:#8a6d1c;
+      --danger:#b42318;
+      --shadow: 0 10px 24px rgba(16,24,40,.08);
+    }
+  }
+
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(122,162,255,.15), transparent 55%),
+                radial-gradient(900px 500px at 90% 0%, rgba(43,179,166,.10), transparent 50%),
+                linear-gradient(180deg, var(--bg), var(--bg));
+    color:var(--text);
+    letter-spacing: .1px;
+  }
+
+  .wrap{ max-width: 1240px; margin: 40px auto; padding: 0 18px; }
+  h1{ font-size: clamp(24px, 3.2vw, 34px); margin:0 0 10px; letter-spacing: -.3px; }
+  .subhead{
+    margin:0 0 18px;
+    color: var(--muted);
+    line-height: 1.45;
+    font-size: 14px;
+    max-width: 920px;
+  }
+
+  .row{ display:grid; grid-template-columns: 1.3fr .7fr; gap:16px; margin-top:16px; align-items:start; }
+  @media (max-width: 1100px){ .row{ grid-template-columns: 1fr; } }
+
+  .stack{ display:grid; gap:16px; }
+
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 55%), var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .card h2, .card h3{
+    margin: 0 0 10px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+  }
+  .card h3{ font-size: 15px; color: var(--muted2); }
+  .sectionTitle{
+    margin: 18px 0 10px;
+    color: var(--muted2);
+    font-weight: 800;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+  }
+
+  .controls{ display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; align-items:center; }
+  .control{
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--text);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  label{ font-size: 12px; color: var(--muted); margin-right: 4px; }
+  select, input[type="number"]{
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.0);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+  input[type="range"]{ width: 160px; }
+
+  .btn{
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-weight: 800;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+  }
+  .btn.primary{
+    background: linear-gradient(180deg, rgba(122,162,255,.22), rgba(122,162,255,.14));
+    border-color: rgba(122,162,255,.35);
+  }
+  .btn.ghost{
+    background: transparent;
+  }
+  .btn:active{ transform: translateY(1px); }
+
+  .metaRight{ margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .status{
+    color: var(--accent);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .help{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width: 18px; height: 18px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted2);
+    font-size: 11px;
+    cursor: help;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--muted2);
+    font-size: 12px;
+  }
+
+  .tiles{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  @media (max-width: 1100px){ .tiles{ grid-template-columns: repeat(2, minmax(160px, 1fr)); } }
+  @media (max-width: 560px){ .tiles{ grid-template-columns: 1fr; } }
+
+  .tile{
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 10px 12px;
+  }
+  .tile .k{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    color: var(--muted2);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .tile .v{
+    margin-top: 6px;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -.2px;
+  }
+  .tile .s{
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .table{
+    width:100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 13px;
+  }
+  .table th, .table td{
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(154,168,191,.18);
+    vertical-align: top;
+  }
+  .table th{
+    text-align:left;
+    color: var(--muted2);
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .table td{
+    color: var(--text);
+  }
+  .table .muted{ color: var(--muted); font-size: 12px; }
+  code{
+    font-family: var(--mono);
+    background: rgba(154,168,191,.12);
+    border: 1px solid rgba(154,168,191,.18);
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+
+  .smallgrid{ display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 1100px){ .smallgrid{ grid-template-columns: 1fr; } }
+
+  .note{
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    margin-top: 10px;
+  }
+  .bullets{
+    margin: 8px 0 0;
+    color: var(--muted);
+    line-height: 1.5;
+    font-size: 12px;
+    padding-left: 18px;
+  }
+  .pillRow{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top: 8px; }
+  .grade{
+    font-weight: 900;
+    letter-spacing: .2px;
+  }
+
+  .footerCard{
+    margin-top: 16px;
+  }
 </style>
 </head>
+
 <body>
 <div class="wrap">
-  <h1>Bitcoin Price — Show 3y Back / 3y Forward</h1>
-  <p class="lead">Using bitcoin price data since 2018 for multi‑frequency tests.</p>
+  <h1>Bitcoin Quant Dashboard — 3Y History / 3Y Scenario Forecast</h1>
+  <p class="subhead">
+    Sample: <b>2018-01-01</b> to latest observation. Estimation frequency is user-selected; charts render in monthly steps for readability.
+    Results are <b>illustrative</b>, based on a deterministic trend fit in log space plus a stylized scenario generator.
+  </p>
 
   <div class="row">
+    <!-- LEFT: MAIN CHART -->
     <div class="card">
+      <div class="pillRow" aria-label="Context chips">
+        <span class="chip">Δt (display step): <b>1 month</b></span>
+        <span class="chip">Horizon <span class="help" title="Forecast horizon in months (T = 36).">T</span>: <b>36 months</b></span>
+        <span class="chip">Annualization: <b>365 days</b></span>
+      </div>
+
       <canvas id="chart" height="420"></canvas>
+
       <div class="controls">
         <div class="control">
-          <label>Fit frequency</label>
-          <select id="freq">
+          <label for="freq">Fit frequency</label>
+          <select id="freq" title="Estimation sampling frequency (affects parameter inference and σ baseline).">
             <option value="daily">Daily</option>
             <option value="weekly">Weekly</option>
             <option value="monthly" selected>Monthly</option>
             <option value="annual">Annual</option>
           </select>
         </div>
+
         <div class="control">
-          <label>Vol level (× baseline)</label>
+          <label for="viewMode">View mode</label>
+          <select id="viewMode" title="Controls how the main chart is displayed. Estimation remains based on log price relative to P₀.">
+            <option value="price" selected>Price</option>
+            <option value="logprice">Log Price</option>
+            <option value="ret">Returns</option>
+            <option value="logret">Log Returns</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="volLevel">
+            Scenario σ level
+            <span class="help" title="σ: baseline volatility of log returns for the selected frequency, mapped to monthly via square-root-of-time; then scaled by this multiplier.">σ</span>
+          </label>
           <input id="volLevel" type="range" min="0" max="2" step="0.05" value="1" />
           <span id="volLevelVal">1.00×</span>
         </div>
-        <button id="btnRandom" class="primary">Randomize Volatility</button>
-        <button id="btnToggle" class="ghost">Hide Volatility</button>
-        <button id="btnReload" class="ghost">Reload Live</button>
-        <button id="btnReloadStats" class="ghost">Reload Stats</button>
-        <span id="status" style="margin-left:auto;color:#9fb0ff;font-size:12px"></span>
+
+        <button id="btnRandom" class="btn primary">Simulate σ Path (Monte Carlo)</button>
+        <button id="btnToggle" class="btn ghost">Toggle Scenario Path</button>
+        <button id="btnReload" class="btn ghost">Reload Live</button>
+        <button id="btnReloadStats" class="btn ghost">Reload Stats</button>
+
+        <div class="metaRight">
+          <span id="status" class="status"></span>
+        </div>
       </div>
-      <footer class="muted">X-axis shows short dates every 6 months (1/YY and 7/YY). Y-axis min auto-sets to the lowest value across history + forecast. Volatility path is endpoint-anchored.</footer>
+
+      <div class="note">
+        Axis labels show <b>Jan/Jul</b> marks. Scenario paths are endpoint-anchored (Brownian bridge). For return views, the deterministic and scenario series represent <b>implied forward returns</b> from the forecast path.
+      </div>
     </div>
 
-    <div class="card">
-      <h3>Parameters & Evaluation</h3>
-      <div class="statgrid">
-        <div class="stat"><b>P₀ (fit start)</b><span id="p0">$—</span></div>
-        <div class="stat"><b>Today price (join)</b><span id="pend">$—</span></div>
-        <div class="stat"><b>g_p (per freq)</b><span id="gp_freq">—</span></div>
-        <div class="stat"><b>d_p (per freq)</b><span id="dp_freq">—</span></div>
-        <div class="stat"><b>g_p (per month)</b><span id="gp_month">—</span></div>
-        <div class="stat"><b>d_p (per month)</b><span id="dp_month">—</span></div>
-        <div class="stat"><b>Half-life (freq units)</b><span id="hl_freq">—</span></div>
-        <div class="stat"><b>In‑sample R²</b><span id="r2">—</span></div>
-        <div class="stat"><b>CV RMSE (log)</b><span id="rmse">—</span></div>
-        <div class="stat"><b>σ baseline (per freq)</b><span id="sig_freq">—</span></div>
-        <div class="stat"><b>σ baseline (per month)</b><span id="sig_month">—</span></div>
-        <div class="stat"><b>AIC / BIC</b><span id="aicbic">—</span></div>
-        <div class="stat"><b>Adj (CV folds)</b><span id="adj">—</span></div>
-        <div class="stat"><b>Predictive grade</b><span id="grade" class="grade">—</span></div>
+    <!-- RIGHT: SUMMARY + MODEL OUTPUT -->
+    <div class="stack">
+      <div class="card">
+        <h3>Summary Stats (selected frequency series)</h3>
+
+        <div class="controls" style="margin-top:8px">
+          <div class="control" title="Risk-free rate (annual, %). Default 0 for Sharpe.">
+            <label for="rf">r<sub>f</sub> (%)</label>
+            <input id="rf" type="number" value="0" step="0.25" min="-10" max="25" style="width:84px"/>
+          </div>
+          <div class="control" title="VaR / CVaR confidence level for horizon loss metrics.">
+            <label for="varAlpha">α</label>
+            <select id="varAlpha">
+              <option value="0.95" selected>95%</option>
+              <option value="0.99">99%</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="tiles">
+          <div class="tile">
+            <div class="k">Annualized Return <span class="help" title="μ̂ = mean(log return) × periods/year (365-day convention).">μ̂</span></div>
+            <div class="v" id="muHat">—</div>
+            <div class="s">Log-return annualization (365-day).</div>
+          </div>
+
+          <div class="tile">
+            <div class="k">Annualized Volatility <span class="help" title="σ̂ = stdev(log return) × √(periods/year).">σ̂</span></div>
+            <div class="v" id="sigHat">—</div>
+            <div class="s">Based on log returns.</div>
+          </div>
+
+          <div class="tile">
+            <div class="k">Sharpe (r<sub>f</sub>=0 default)</div>
+            <div class="v" id="sharpe">—</div>
+            <div class="s">(μ̂ − r<sub>f</sub>)/σ̂</div>
+          </div>
+
+          <div class="tile">
+            <div class="k">Max Drawdown</div>
+            <div class="v" id="mdd">—</div>
+            <div class="s">Computed on price levels.</div>
+          </div>
+
+          <div class="tile">
+            <div class="k">Skewness</div>
+            <div class="v" id="skew">—</div>
+            <div class="s">On log returns.</div>
+          </div>
+
+          <div class="tile">
+            <div class="k">Excess Kurtosis</div>
+            <div class="v" id="exkurt">—</div>
+            <div class="s">Kurtosis − 3 (log returns).</div>
+          </div>
+        </div>
+
+        <div class="note" id="summaryNote"></div>
       </div>
-      <div class="muted" style="margin-top:8px">
-        <b>Notes</b>
-        <ul style="margin-top:6px; line-height:1.35">
-          <li><b>Daily under‑performs:</b> Gompertz is a slow macro curve; daily BTC has high micro‑noise (news, order‑flow, microstructure). One‑step‑ahead daily forecasts ≈ random → low R² and high CV RMSE.</li>
-          <li><b>Annual looks strong (statistically):</b> Aggregation smooths volatility; the multi‑year adoption/halving trend dominates annually, so residual variance falls and fit improves.</li>
-          <li><b>Display vs estimation:</b> The forecast is <i>displayed monthly</i> for readability, but parameters are estimated at the frequency you pick (daily/weekly/monthly/annual). An <i>annual</i> fit still renders as a smooth monthly curve; frequency only changes how the parameters are learned.</li>
-          <li><b>Macro rationale for ~$200k:</b> Recent 5‑yr growth averaged ~60% YoY, but at multi‑trillion‑dollar scale growth should slow. Many institutional outlooks see ~25% YoY as very bullish → a 3‑year path near $200k is financially plausible even if daily statistical metrics are weak.</li>
-          <li><b>Sample‑size caveat:</b> Annual since 2018 has few observations → fewer CV folds and optimism risk. We down‑weight the grade by a <i>folds adjustment</i> (see “Adj (CV folds)”). Monthly is a balanced middle‑ground.</li>
-        </ul>
+
+      <div class="card">
+        <h3>Model Inputs &amp; Estimation Output</h3>
+
+        <div class="sectionTitle">Inputs</div>
+        <table class="table" aria-label="Inputs table">
+          <tbody>
+            <tr>
+              <td class="muted">P₀ (fit start)</td>
+              <td><span id="p0">$—</span></td>
+              <td class="muted">Join price (today)</td>
+              <td><span id="pend">$—</span></td>
+            </tr>
+            <tr>
+              <td class="muted">Baseline σ (per freq)</td>
+              <td><span id="sig_freq">—</span></td>
+              <td class="muted">Baseline σ (per month)</td>
+              <td><span id="sig_month">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sectionTitle">Regression-style output (through-origin OLS)</div>
+        <table class="table" aria-label="Regression output table">
+          <thead>
+            <tr>
+              <th>Specification</th>
+              <th>Estimate</th>
+              <th>Std. Error</th>
+              <th>t-Stat</th>
+              <th>p-Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <span class="muted">y = β z(d), no intercept</span><br/>
+                <span class="muted">y = ln(P/P₀), z(d)=1−e<sup>−d·t</sup></span>
+              </td>
+              <td><span id="betaHat">—</span></td>
+              <td><span id="seBeta">—</span></td>
+              <td><span id="tStat">—</span></td>
+              <td><span id="pVal">—</span> <span class="muted">(approx)</span></td>
+            </tr>
+            <tr>
+              <td class="muted">Fit statistics</td>
+              <td colspan="4">
+                R²: <b id="r2">—</b> &nbsp;&nbsp;|&nbsp;&nbsp;
+                Adj R²: <b id="adjr2">—</b> <span class="muted">(approx)</span>
+                <span class="muted" style="margin-left:10px">| RMSE (CV, log):</span> <b id="rmse">—</b>
+                <span class="muted" style="margin-left:10px">| AIC/BIC:</span> <b id="aicbic">—</b>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sectionTitle">Trend parameters (reported per selected frequency and per month)</div>
+        <table class="table" aria-label="Trend parameter table">
+          <tbody>
+            <tr>
+              <td class="muted">g (per freq)</td><td><b id="gp_freq">—</b></td>
+              <td class="muted">d (per freq)</td><td><b id="dp_freq">—</b></td>
+            </tr>
+            <tr>
+              <td class="muted">g (per month)</td><td><b id="gp_month">—</b></td>
+              <td class="muted">d (per month)</td><td><b id="dp_month">—</b></td>
+            </tr>
+            <tr>
+              <td class="muted">Half-life</td><td><b id="hl_freq">—</b></td>
+              <td class="muted">Predictive grade</td><td><b id="grade" class="grade">—</b> <span class="muted" id="adj">—</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="note">
+          <b>Interpretation notes (CFA-style):</b>
+          <ul class="bullets">
+            <li><b>Estimation in log space:</b> the deterministic trend is fit on <code>y = ln(P/P₀)</code> to stabilize scale and interpretability.</li>
+            <li><b>Frequency choice:</b> higher frequency tends to increase microstructure noise; lower frequency reduces noise but may reduce sample size.</li>
+            <li><b>Model risk:</b> this is a stylized macro trend + scenario generator; diagnostics are indicative, not definitive.</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Why we don’t use averages → Visual proofs</h3>
+  <!-- Estimation intuition -->
+  <div class="card" style="margin-top:16px">
+    <h3>Estimation Intuition (Least Squares / Model Fit)</h3>
     <div class="smallgrid">
       <div>
         <canvas id="sseChart" height="220"></canvas>
-        <p class="muted">Loss vs <code>d</code>. We select the <code>d</code> that minimizes SSE; this determines <code>d_p</code> (MLE under Gaussian errors).</p>
+        <p class="note">Loss versus <code>d</code>. We select <code>d</code> that minimizes SSE in log space (least squares / Gaussian error proxy).</p>
       </div>
       <div>
         <canvas id="yzChart" height="220"></canvas>
-        <p class="muted">Scatter of <code>y</code> vs <code>z_d</code> with fitted line <code>ŷ = β z_d</code>. Through‑origin OLS uses <code>β = Σ(z·y)/Σ(z²)</code>; then <code>g_p=β·d</code>.</p>
+        <p class="note">Scatter of <code>y</code> versus <code>z(d)</code> with fitted line <code>ŷ = β z(d)</code>. Through-origin OLS uses <code>β = Σ(z·y)/Σ(z²)</code>; then <code>g = β·d</code>.</p>
       </div>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Variable Index — Gompertz</h3>
-    <div class="muted">
-      <p><b>β (slope):</b> <code>β = Σ(z·y)/Σ(z²)</code> (through‑origin OLS). <b>Then</b> <code>g_p = β·d</code>.</p>
-      <p><b>P₀</b>: price at the start of the (2018→today) fit window.</p>
-      <p><b>Σ(z·y)</b>: sum of <code>z_d(t)·y(t)</code> across time.</p>
-      <p><b>Σ(z²)</b>: sum of <code>z_d(t)^2</code> across time.</p>
-      <p><b>g_p, d_p</b>: initial log‑growth and its decay; <b>Half‑life</b>: <code>ln(2)/d_p</code>.</p>
-      <p><b>Path:</b> <code>P(t)=P₀·exp((g_p/d_p)(1−e^{−d_p t}))</code>.</p>
+  <!-- Model definitions -->
+  <div class="card" style="margin-top:16px">
+    <h3>Model — Deterministic Trend (Log-linear regression form)</h3>
+    <div class="note">
+      <div class="sectionTitle">Definitions</div>
+      <ul class="bullets">
+        <li><b>Price:</b> P<sub>t</sub> (USD/BTC)</li>
+        <li><b>Log price:</b> ln(P<sub>t</sub>)</li>
+        <li><b>Returns (simple):</b> R<sub>t</sub> = P<sub>t</sub>/P<sub>t−1</sub> − 1</li>
+        <li><b>Log returns:</b> r<sub>t</sub> = ln(P<sub>t</sub>/P<sub>t−1</sub>)</li>
+        <li><b>Annualization convention:</b> 365 days for BTC; periods/year depend on selected sampling frequency.</li>
+      </ul>
+
+      <div class="sectionTitle">Trend equation (unchanged logic; reframed)</div>
+      <ul class="bullets">
+        <li>Fit <code>y(t)=ln(P(t)/P₀)</code> with <code>y(t) ≈ β·(1−e^{−d t})</code> using through-origin OLS for each grid candidate <code>d</code>.</li>
+        <li>Recover <b>g</b> as <code>g = β·d</code>, yielding the deterministic path: <code>P(t)=P₀·exp((g/d)(1−e^{−d t}))</code>.</li>
+        <li><b>Half-life</b> of growth decay: <code>ln(2)/d</code> (in selected frequency units).</li>
+      </ul>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Variable Index — Brownian Bridge Volatility</h3>
-    <div class="muted">
-      <p><b>r</b>: log return for the selected frequency, <code>r_t=ln(P_t/P_{t-1})</code>.</p>
-      <p><b>σ</b>: baseline stdev of <code>r</code> since 2018; per‑month via square‑root‑of‑time.</p>
-      <p><b>B(t)</b>: bridge with <code>B(0)=B(T)=0</code> (endpoint‑anchored randomness).</p>
-      <p><b>Volatile path:</b> <code>\u007eP(t)=P(t)·exp(σ·B(t))</code>.</p>
+  <div class="card" style="margin-top:16px">
+    <h3>Scenario Generator — Brownian Bridge (Endpoint-anchored)</h3>
+    <div class="note">
+      <ul class="bullets">
+        <li>Let <code>B(t)</code> be a standardized Brownian bridge with <code>B(0)=B(T)=0</code> (endpoint-anchored randomness).</li>
+        <li>Baseline volatility uses the standard deviation of log returns from the selected frequency, mapped to monthly: <code>σ_month = σ_freq·√(periods/month)</code>.</li>
+        <li>Scenario path: <code>Ṕ(t) = P_trend(t)·exp(σ_month · B(t))</code>, scaled by the user’s σ multiplier.</li>
+      </ul>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Variable Index — Statistical Tools</h3>
-    <div class="muted">
-      <p><b>Decay selection:</b> choose <code>d_p</code> by minimizing SSE over a grid of <code>d</code>.</p>
-      <p><b>CV RMSE:</b> rolling origin; fit on a growing window and score one‑step‑ahead log‑errors.</p>
-      <p><b>AIC/BIC & AICc:</b> penalized likelihoods; AICc corrects AIC for small samples (<code>AICc = AIC + 2k(k+1)/(n-k-1)</code>). We still grade primarily with CV RMSE.</p>
+  <!-- Diagnostics -->
+  <div class="card" style="margin-top:16px">
+    <h3>Diagnostics — Fit, Cross-Validation, Information Criteria</h3>
+    <div class="smallgrid">
+      <div>
+        <canvas id="residChart" height="220"></canvas>
+        <p class="note">
+          Residuals in log space (in-sample): <code>ε(t) = y(t) − ŷ(t)</code>.
+          Returns often exhibit heteroskedasticity / volatility clustering; residual diagnostics are indicative.
+        </p>
+      </div>
+      <div>
+        <canvas id="fanChart" height="220"></canvas>
+        <p class="note">
+          Fan chart shows the Monte Carlo distribution (N=200) around the deterministic forecast using endpoint-anchored scenarios.
+        </p>
+        <div class="pillRow" style="margin-top:8px">
+          <span class="chip">VaR<sub>α</sub> (3Y): <b id="varH">—</b></span>
+          <span class="chip">CVaR<sub>α</sub> (3Y): <b id="cvarH">—</b></span>
+          <span class="chip">Terminal Pctl (5/50/95): <b id="termPct">—</b></span>
+        </div>
+        <div class="note" style="margin-top:8px">
+          VaR/CVaR are reported as <b>loss magnitudes</b> based on horizon simple returns (vs join price).
+        </div>
+      </div>
     </div>
   </div>
 
-  <footer class="muted">Hidden API key: use <code>?cgkey=YOUR_KEY</code> or set <code>localStorage.setItem('cgkey','YOUR_KEY')</code> and reload. Forecast uses monthly steps for display; fit & volatility baselines respect your selected frequency.</footer>
+  <!-- Data & disclosures -->
+  <div class="card footerCard">
+    <h3>Data &amp; Disclosures</h3>
+    <div class="note">
+      <ul class="bullets">
+        <li><b>Data source:</b> CoinGecko (primary) with CryptoCompare fallback.</li>
+        <li><b>Sample period:</b> 2018-01-01 to latest observation (loaded at runtime).</li>
+        <li><b>Transformations:</b> log price relative to P₀ for estimation; log returns for volatility and summary stats.</li>
+        <li><b>Annualization:</b> 365-day convention for BTC; periods/year depends on selected sampling frequency.</li>
+        <li><b>Disclaimer:</b> For educational purposes only. Hypothetical model and simulation outputs. Not investment advice.</li>
+      </ul>
+      <div class="note">
+        API key (optional): use <code>?cgkey=YOUR_KEY</code> or set <code>localStorage.setItem('cgkey','YOUR_KEY')</code> and reload.
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-// Hidden API key
+// ---------------------------
+// Configuration / constants
+// ---------------------------
 const CG_KEY = (new URLSearchParams(location.search)).get('cgkey') || localStorage.getItem('cgkey') || '';
-
-// Helpers
-const clamp01 = (x)=> Math.max(0, Math.min(1, x));
-const fmtUSD = (x) => x.toLocaleString(undefined, {maximumFractionDigits:0});
 const DAYS_PER_MONTH = 30.4375;
 const WEEKS_PER_MONTH = 4.34524;
 
-const monthsBetween = (d0, d1) => (d1 - d0) / (1000*60*60*24 * 30.4375);
+// ---------------------------
+// Formatting helpers
+// ---------------------------
+const clamp01 = (x)=> Math.max(0, Math.min(1, x));
+const fmtUSD = (x) => x.toLocaleString(undefined, {maximumFractionDigits:0});
+const fmtPct = (x, dp=2) => (isFinite(x) ? (100*x).toFixed(dp)+'%' : '—');
+const fmtNum = (x, dp=3) => (isFinite(x) ? x.toFixed(dp) : '—');
+
+function short6MLabel(iso){
+  const d=new Date(iso);
+  const m=d.getMonth();
+  if(m===0||m===6) return (m+1)+'/'+String(d.getFullYear()).slice(-2);
+  return '';
+}
+function isoYYYYMM(d){ return d.toISOString().slice(0,10); }
+
+// ---------------------------
+// Time distance helpers
+// ---------------------------
+const monthsBetween = (d0, d1) => (d1 - d0) / (1000*60*60*24 * DAYS_PER_MONTH);
 const weeksBetween  = (d0, d1) => (d1 - d0) / (1000*60*60*24 * 7);
 const daysBetween   = (d0, d1) => (d1 - d0) / (1000*60*60*24);
 const yearsBetween  = (d0, d1) => (d0 ? ((d1.getFullYear() - d0.getFullYear()) + ((d1.getMonth()-d0.getMonth())/12) + ((d1.getDate()-d0.getDate())/365.25)) : 0);
 
+// ---------------------------
 // Aggregators
-function toMonthly(daily) { const byYM = new Map(); daily.forEach(pt => { const y=pt.date.getFullYear(), m=pt.date.getMonth(); const key=y+'-'+m; const prev=byYM.get(key); if(!prev || pt.date>prev.date) byYM.set(key, pt); }); return Array.from(byYM.values()).sort((a,b)=> a.date-b.date); }
-function isoWeekKey(d) { const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay()||7)); const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1)); const weekNo = Math.ceil((((date - yearStart)/86400000) + 1)/7); return date.getUTCFullYear() + '-W' + String(weekNo).padStart(2,'0'); }
-function toWeekly(daily) { const byW = new Map(); daily.forEach(pt => { const key = isoWeekKey(pt.date); const prev = byW.get(key); if (!prev || pt.date > prev.date) byW.set(key, pt); }); return Array.from(byW.values()).sort((a,b)=> a.date-b.date); }
-function toAnnual(daily) { const byY = new Map(); daily.forEach(pt => { const y=pt.date.getFullYear(); const prev=byY.get(y); if(!prev || pt.date>prev.date) byY.set(y, pt); }); return Array.from(byY.values()).sort((a,b)=> a.date-b.date); }
-function to2018Daily(d){ const s=new Date(2018,0,1); return d.filter(pt=> pt.date>=s); }
+// ---------------------------
+function toMonthly(daily){
+  const byYM = new Map();
+  daily.forEach(pt => {
+    const y=pt.date.getFullYear(), m=pt.date.getMonth();
+    const key=y+'-'+m;
+    const prev=byYM.get(key);
+    if(!prev || pt.date>prev.date) byYM.set(key, pt);
+  });
+  return Array.from(byYM.values()).sort((a,b)=> a.date-b.date);
+}
+function isoWeekKey(d){
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay()||7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((date - yearStart)/86400000) + 1)/7);
+  return date.getUTCFullYear() + '-W' + String(weekNo).padStart(2,'0');
+}
+function toWeekly(daily){
+  const byW = new Map();
+  daily.forEach(pt => {
+    const key = isoWeekKey(pt.date);
+    const prev = byW.get(key);
+    if (!prev || pt.date > prev.date) byW.set(key, pt);
+  });
+  return Array.from(byW.values()).sort((a,b)=> a.date-b.date);
+}
+function toAnnual(daily){
+  const byY = new Map();
+  daily.forEach(pt => {
+    const y=pt.date.getFullYear();
+    const prev=byY.get(y);
+    if(!prev || pt.date>prev.date) byY.set(y, pt);
+  });
+  return Array.from(byY.values()).sort((a,b)=> a.date-b.date);
+}
+function to2018Daily(d){
+  const s=new Date(2018,0,1);
+  return d.filter(pt=> pt.date>=s);
+}
 
-// Fit (single, OLS + SSE)
-function olsSlope(y,z){ let zy=0, zz=0; for (let i=0;i<y.length;i++){ zy += z[i]*y[i]; zz += z[i]*z[i]; } return zy/zz; }
+// ---------------------------
+// OLS fit (through-origin) with SSE grid over d
+// Keeps existing logic; reframed in UI as deterministic trend in log space
+// ---------------------------
+function olsSlope(y,z){
+  let zy=0, zz=0;
+  for (let i=0;i<y.length;i++){ zy += z[i]*y[i]; zz += z[i]*z[i]; }
+  return zy/zz;
+}
 function fitSingle(ts, prices){
   const P0 = prices[0];
   const y = prices.map(p => Math.log(p/P0));
   let best = {d:0.03, g:0.03, loss:Infinity, beta:0, z:[], yhat:[], y:y.slice(), P0};
   const dGrid=[], lossGrid=[];
   const step = 0.0006;
+
   for (let d=step; d<=0.15; d+=step) {
     const z = ts.map(t => 1 - Math.exp(-d*t));
     const beta = olsSlope(y,z);
@@ -189,51 +659,118 @@ function fitSingle(ts, prices){
     dGrid.push(d); lossGrid.push(L);
     if (L < best.loss) best = {d, g: beta*d, loss:L, beta, z, yhat, y, P0};
   }
+
   const ybar = y.reduce((a,b)=>a+b,0)/y.length;
-  let ssTot=0, ssRes=0; for (let i=0;i<y.length;i++) { ssTot+=(y[i]-ybar)**2; ssRes+=(y[i]-best.yhat[i])**2; }
+  let ssTot=0, ssRes=0;
+  for (let i=0;i<y.length;i++) { ssTot+=(y[i]-ybar)**2; ssRes+=(y[i]-best.yhat[i])**2; }
   const r2 = 1 - ssRes/ssTot;
-  const n=y.length; const sse = ssRes; const sigma2 = sse/n; const logL = -0.5*n*(Math.log(2*Math.PI*sigma2)+1);
-  const k=2; const AIC = 2*k - 2*logL; const BIC = k*Math.log(n) - 2*logL;
+
+  const n=y.length; const sse = ssRes;
+  const sigma2 = sse/n;
+  const logL = -0.5*n*(Math.log(2*Math.PI*sigma2)+1);
+  const k=2;
+  const AIC = 2*k - 2*logL;
+  const BIC = k*Math.log(n) - 2*logL;
   const AICc = AIC + (2*k*(k+1))/(Math.max(1, n-k-1));
   return {...best, r2, dGrid, lossGrid, AIC, BIC, AICc, n, sse};
 }
-
-// Null model (flat log price: yhat=0)
 function fitNull(ts, prices){
   const P0 = prices[0];
   const y = prices.map(p => Math.log(p/P0));
   const ybar = y.reduce((a,b)=>a+b,0)/y.length;
-  let ssTot=0, ssRes=0; for (let i=0;i<y.length;i++) { ssTot+=(y[i]-ybar)**2; ssRes+=(y[i]-0)**2; }
+  let ssTot=0, ssRes=0;
+  for (let i=0;i<y.length;i++) { ssTot+=(y[i]-ybar)**2; ssRes+=(y[i]-0)**2; }
   const r2 = 1 - ssRes/ssTot;
-  const n=y.length; const sse = ssRes; const sigma2 = sse/n; const logL = -0.5*n*(Math.log(2*Math.PI*sigma2)+1);
-  const k=0; const AIC = 2*k - 2*logL; const BIC = k*Math.log(n) - 2*logL; const AICc=AIC;
+  const n=y.length; const sse = ssRes;
+  const sigma2 = sse/n;
+  const logL = -0.5*n*(Math.log(2*Math.PI*sigma2)+1);
+  const k=0;
+  const AIC = 2*k - 2*logL;
+  const BIC = k*Math.log(n) - 2*logL;
+  const AICc=AIC;
   return {AIC,BIC,AICc,n,sse,r2};
 }
 
-// Forecast
-function gompertzSeries(P0, g, d, steps){ const out=[]; for (let t=0;t<=steps;t++) out.push(P0*Math.exp((g/d)*(1-Math.exp(-d*t)))); return out; }
-
-// Brownian bridge
-function brownianBridgeStd(T){ const z = Array.from({length:T}, ()=> gaussian()); const W=[0]; let c=0; for (let i=0;i<T;i++){ c+=z[i]; W.push(c);} const WT=W[T]; const B=W.map((w,t)=> w - (t/T)*WT); const scl=Math.sqrt(T); const out=B.map(v=>v/(scl||1)); out[0]=0; out[T]=0; return out; }
-function gaussian(){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
-
-// Data sources
-async function tryCG(){ const headers = CG_KEY ? {'x-cg-demo-api-key': CG_KEY} : undefined; const url='https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=max&interval=daily'; const r=await fetch(url,{headers}); if(!r.ok) throw new Error('CG '+r.status); const j=await r.json(); if(!j.prices) throw new Error('CG no prices'); return j.prices.map(([ms,p])=>({date:new Date(ms),price:p})); }
-async function tryCC(){ try{ const r=await fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&allData=true'); if(!r.ok) throw new Error('CC-all '+r.status); const j=await r.json(); if(!j.Data||!j.Data.Data) throw new Error('shape'); return j.Data.Data.map(row=>({date:new Date(row.time*1000), price:row.close})); } catch(e){ const r=await fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=2000'); if(!r.ok) throw new Error('CC '+r.status); const j=await r.json(); return j.Data.Data.map(row=>({date:new Date(row.time*1000), price:row.close})); } }
-
-// State
-let DAILIES=null, WEEKLIES=null, MONTHLIES=null, ANNUALS=null;
-let _histData=null, _forecast=null, _histLen=0, _volPath=null;
-let _sigmaMonthly=null;
-let _fit=null;
-let _cacheCV = new Map(); // memoize CV: key -> {rmseLog, folds}
-
-async function loadLive(){
-  const status=document.getElementById('status'); status.textContent='Loading full-history data…';
-  try{ const daily=to2018Daily(await tryCG()); status.textContent='Loaded from CoinGecko.'; DAILIES=daily; WEEKLIES=toWeekly(daily); MONTHLIES=toMonthly(daily); ANNUALS=toAnnual(daily); buildAll(); }
-  catch(e1){ try{ const daily=to2018Daily(await tryCC()); status.textContent='Loaded from CryptoCompare.'; DAILIES=daily; WEEKLIES=toWeekly(daily); MONTHLIES=toMonthly(daily); ANNUALS=toAnnual(daily); buildAll(); } catch(e2){ status.textContent='Both APIs blocked.'; } }
+// Deterministic forecast path (same function name kept; UI reframed)
+function gompertzSeries(P0, g, d, steps){
+  const out=[];
+  for (let t=0;t<=steps;t++) out.push(P0*Math.exp((g/d)*(1-Math.exp(-d*t))));
+  return out;
 }
 
+// ---------------------------
+// Brownian bridge (standardized) + RNG
+// ---------------------------
+function gaussian(){
+  let u=0,v=0;
+  while(!u)u=Math.random();
+  while(!v)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function brownianBridgeStd(T){
+  const z = Array.from({length:T}, ()=> gaussian());
+  const W=[0];
+  let c=0;
+  for (let i=0;i<T;i++){ c+=z[i]; W.push(c); }
+  const WT=W[T];
+  const B=W.map((w,t)=> w - (t/T)*WT);
+  const scl=Math.sqrt(T);
+  const out=B.map(v=>v/(scl||1));
+  out[0]=0; out[T]=0;
+  return out;
+}
+
+// ---------------------------
+// Data sources
+// ---------------------------
+async function tryCG(){
+  const headers = CG_KEY ? {'x-cg-demo-api-key': CG_KEY} : undefined;
+  const url='https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=max&interval=daily';
+  const r=await fetch(url,{headers});
+  if(!r.ok) throw new Error('CG '+r.status);
+  const j=await r.json();
+  if(!j.prices) throw new Error('CG no prices');
+  return j.prices.map(([ms,p])=>({date:new Date(ms),price:p}));
+}
+async function tryCC(){
+  try{
+    const r=await fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&allData=true');
+    if(!r.ok) throw new Error('CC-all '+r.status);
+    const j=await r.json();
+    if(!j.Data||!j.Data.Data) throw new Error('shape');
+    return j.Data.Data.map(row=>({date:new Date(row.time*1000), price:row.close}));
+  } catch(e){
+    const r=await fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=BTC&tsym=USD&limit=2000');
+    if(!r.ok) throw new Error('CC '+r.status);
+    const j=await r.json();
+    return j.Data.Data.map(row=>({date:new Date(row.time*1000), price:row.close}));
+  }
+}
+
+// ---------------------------
+// State
+// ---------------------------
+let DAILIES=null, WEEKLIES=null, MONTHLIES=null, ANNUALS=null;
+
+let _fit=null;
+let _cacheCV = new Map();
+
+let _histLen=0;
+let _labels=null;
+let _histMonthlyPrices=null;
+let _forecastPrices=null;       // length = horizon+1 (includes join)
+let _sigmaMonthly=null;
+let _volPath=null;              // single scenario multiplier array
+let _fan=null;                  // {lo, med, hi} in price space (forecast segment length horizon+1)
+let _simReturns=null;           // horizon simple returns (terminal vs join)
+let _lastJoinPrice=null;
+
+const N_FAN = 200;
+const HORIZON_MONTHS = 36;
+
+// ---------------------------
+// Frequency utilities
+// ---------------------------
 function seriesForFreq(freq){
   if(freq==='daily') return DAILIES;
   if(freq==='weekly') return WEEKLIES;
@@ -241,122 +778,567 @@ function seriesForFreq(freq){
   return ANNUALS;
 }
 function monthsPerUnitFor(freq){
-  if(freq==='daily') return 1/30.4375;
-  if(freq==='weekly') return 1/4.34524;
+  if(freq==='daily') return 1/DAYS_PER_MONTH;
+  if(freq==='weekly') return 1/WEEKS_PER_MONTH;
   if(freq==='monthly') return 1;
   return 12;
 }
 function unitNameFor(freq){
   return (freq==='daily'?'days':(freq==='weekly'?'weeks':(freq==='monthly'?'months':'years')));
 }
+function periodsPerYearFor(freq){
+  // 365-day convention
+  if(freq==='daily') return 365;
+  if(freq==='weekly') return 365/7;
+  if(freq==='monthly') return 365/DAYS_PER_MONTH;
+  return 1;
+}
 
-function buildAll(){
-  const freq=document.getElementById('freq').value;
+// ---------------------------
+// Information criteria weight vs null
+// ---------------------------
+function IC_weight(AIC_curr, AIC_null){
+  const d = AIC_curr - AIC_null;
+  const wCurr = Math.exp(-0.5*Math.max(0,d));
+  const wNull = Math.exp(-0.5*Math.max(0,-d));
+  return wCurr / (wCurr + wNull);
+}
 
-  const series = seriesForFreq(freq);
-  const t0 = series[0].date;
-  const tFunc = (freq==='daily')?daysBetween:(freq==='weekly')?weeksBetween:(freq==='monthly')?monthsBetween:yearsBetween;
-  const monthsPerUnit = monthsPerUnitFor(freq);
+// ---------------------------
+// Time-series CV: rolling-origin 1-step-ahead RMSE on log-price
+// ---------------------------
+function cvKey(freq, n){ return `ols|l2|single|${freq}|${n}`; }
+function computeCV(ts, prices){
+  const n = prices.length;
+  if (n<40) return {rmseLog: NaN, folds: 0};
+  const minTrain = Math.max(24, Math.floor(n*0.3));
+  const maxFolds = 12;
+  const step = Math.max(1, Math.floor((n - (minTrain+2)) / maxFolds));
+  const errs=[];
+  let folds=0;
 
-  const ts = series.map(pt=> tFunc(t0, pt.date));
-  const prices = series.map(pt=> pt.price);
+  for (let idx=minTrain; idx<=n-2; idx+=step){
+    const tsTrain = ts.slice(0, idx+1);
+    const prTrain = prices.slice(0, idx+1);
+    const tsNext = ts[idx+1];
 
-  // Fit (OLS + SSE only)
-  const fit = fitSingle(ts, prices); _fit=fit;
+    const f = fitSingle(tsTrain, prTrain);
+    const g = f.g, d = f.d, P0 = prTrain[0];
+    const yhat_next = (g/d) * (1 - Math.exp(-d*tsNext));
+    const Phat_next = P0 * Math.exp(yhat_next);
+    const e = Math.log(prices[idx+1]) - Math.log(Phat_next);
 
-  // Vol baseline (per selected freq) -> monthly by sqrt(time)
-  const rets=[]; for(let i=1;i<series.length;i++) rets.push(Math.log(series[i].price/series[i-1].price));
-  const mean=rets.reduce((a,b)=>a+b,0)/rets.length;
-  const sd=Math.sqrt(rets.reduce((s,x)=> s + (x-mean)*(x-mean), 0)/rets.length);
-  const periodsPerMonth = 1/monthsPerUnit;
-  _sigmaMonthly = sd * Math.sqrt(periodsPerMonth);
+    errs.push(e);
+    folds++;
+  }
+  const mse = errs.reduce((s,x)=> s + x*x, 0) / errs.length;
+  return {rmseLog: Math.sqrt(mse), folds};
+}
 
-  // Convert g,d to monthly
-  const g_month = fit.g / monthsPerUnit;
-  const d_month = fit.d / monthsPerUnit;
+// ---------------------------
+// Summary statistics
+// ---------------------------
+function mean(arr){
+  if(!arr.length) return NaN;
+  return arr.reduce((a,b)=>a+b,0)/arr.length;
+}
+function stdev(arr){
+  if(arr.length<2) return NaN;
+  const m=mean(arr);
+  const v=arr.reduce((s,x)=> s+(x-m)*(x-m),0)/arr.length; // population
+  return Math.sqrt(v);
+}
+function skewness(arr){
+  if(arr.length<3) return NaN;
+  const m=mean(arr), sd=stdev(arr);
+  if(!isFinite(sd) || sd===0) return NaN;
+  const m3=arr.reduce((s,x)=>{ const d=x-m; return s+d*d*d; },0)/arr.length;
+  return m3/(sd**3);
+}
+function excessKurtosis(arr){
+  if(arr.length<4) return NaN;
+  const m=mean(arr), sd=stdev(arr);
+  if(!isFinite(sd) || sd===0) return NaN;
+  const m4=arr.reduce((s,x)=>{ const d=x-m; return s+d*d*d*d; },0)/arr.length;
+  return m4/(sd**4) - 3;
+}
+function maxDrawdown(prices){
+  if(prices.length<2) return NaN;
+  let peak=prices[0], mdd=0;
+  for(let i=1;i<prices.length;i++){
+    peak = Math.max(peak, prices[i]);
+    const dd = (prices[i]/peak) - 1;
+    mdd = Math.min(mdd, dd);
+  }
+  return mdd; // negative
+}
+function calcSummaryStats(series, freq){
+  const prices = series.map(x=>x.price).filter(x=>isFinite(x));
+  const logRets = [];
+  for(let i=1;i<prices.length;i++) logRets.push(Math.log(prices[i]/prices[i-1]));
+  const mu = mean(logRets);
+  const sig = stdev(logRets);
+  const ppy = periodsPerYearFor(freq);
+  const muAnn = mu * ppy;
+  const sigAnn = sig * Math.sqrt(ppy);
+  const mdd = maxDrawdown(prices);
+  const sk = skewness(logRets);
+  const exk = excessKurtosis(logRets);
+  return {muAnn, sigAnn, mdd, sk, exk, ppy, n:prices.length};
+}
 
-  // Main chart (monthly last 36 + 36 forward)
-  const monthlyHist = MONTHLIES.slice(-36);
-  const lastPoint = monthlyHist[monthlyHist.length-1];
-  const horizonMonths=36;
-  const projMonthly = gompertzSeries(lastPoint.price, g_month, d_month, horizonMonths);
-  const labels = monthlyHist.map(pt=> pt.date.toISOString().slice(0,10)).concat(
-    Array.from({length:horizonMonths},(_,i)=> new Date(lastPoint.date.getFullYear(), lastPoint.date.getMonth()+i+1,1).toISOString().slice(0,10))
-  );
-  const histData = monthlyHist.map(pt=> pt.price);
-  const forecast = [ lastPoint.price, ...projMonthly.slice(1) ];
-  _histData=histData; _forecast=forecast; _histLen=histData.length;
-  const ymin = Math.min(...histData, ...forecast); const yMinRounded = Math.max(0, Math.floor(ymin/1000)*1000);
+// ---------------------------
+// Regression inference (through-origin OLS): y = β z(d)
+// ---------------------------
+function normalCDF(x){
+  // Abramowitz-Stegun approximation
+  const t = 1 / (1 + 0.2316419 * Math.abs(x));
+  const d = 0.3989423 * Math.exp(-x*x/2);
+  let p = d*t*(0.3193815 + t*(-0.3565638 + t*(1.781478 + t*(-1.821256 + t*1.330274))));
+  if (x > 0) p = 1 - p;
+  return p;
+}
+function regressionInference(fit){
+  const n = fit.n;
+  const beta = fit.beta;
+  const sse = fit.sse;
+  const z = fit.z;
 
+  let zz = 0;
+  for(let i=0;i<z.length;i++) zz += z[i]*z[i];
+
+  // per spec: sigma^2 = SSE/(n-1), Var(beta)=sigma^2 / sum(z^2)
+  const sigma2 = sse / Math.max(1, (n - 1));
+  const varBeta = sigma2 / Math.max(1e-12, zz);
+  const se = Math.sqrt(varBeta);
+  const t = beta / (se || 1e-12);
+
+  // approx p-value using Normal (labelled "approx")
+  const pApprox = 2*(1 - normalCDF(Math.abs(t)));
+
+  const r2 = fit.r2;
+  const k = 1;
+  const adjR2 = (n > (k+1)) ? (1 - (1-r2)*((n-1)/(n-k-1))) : NaN;
+  return {beta, se, t, pApprox, r2, adjR2};
+}
+
+// ---------------------------
+// Scenario fan + VaR/CVaR
+// ---------------------------
+function quantileSorted(sortedArr, q){
+  if(!sortedArr.length) return NaN;
+  const pos = (sortedArr.length - 1) * q;
+  const lo = Math.floor(pos);
+  const hi = Math.ceil(pos);
+  if (lo === hi) return sortedArr[lo];
+  const w = pos - lo;
+  return sortedArr[lo]*(1-w) + sortedArr[hi]*w;
+}
+function calcVaRCVaR(simReturns, alpha){
+  if(!simReturns || simReturns.length<5) return {varLoss: NaN, cvarLoss: NaN, q: NaN};
+  const tailProb = 1 - alpha;
+  const s = simReturns.slice().sort((a,b)=>a-b);
+  const q = quantileSorted(s, tailProb); // tail quantile of returns (often negative)
+  const tail = simReturns.filter(r => r <= q);
+  const tailMean = mean(tail);
+  // report loss magnitude (positive)
+  const varLoss = Math.max(0, -q);
+  const cvarLoss = Math.max(0, -(tailMean));
+  return {varLoss, cvarLoss, q};
+}
+function simulateFan(N, sigmaMonthlyScaled, forecastPrices){
+  // forecastPrices length = T+1, includes join at t=0, and ends at t=T
+  const T = forecastPrices.length - 1;
+  const valuesByT = Array.from({length:T+1}, ()=> []);
+  const terminalReturns = [];
+
+  for(let n=0;n<N;n++){
+    const B = brownianBridgeStd(T);
+    const path = new Array(T+1);
+    for(let t=0;t<=T;t++){
+      const mult = Math.exp(sigmaMonthlyScaled * B[t]);
+      const p = forecastPrices[t] * mult;
+      path[t] = p;
+      valuesByT[t].push(p);
+    }
+    const rT = (path[T] / forecastPrices[0]) - 1;
+    terminalReturns.push(rT);
+  }
+
+  const lo=new Array(T+1), med=new Array(T+1), hi=new Array(T+1);
+  for(let t=0;t<=T;t++){
+    const s = valuesByT[t].sort((a,b)=>a-b);
+    lo[t]  = quantileSorted(s, 0.05);
+    med[t] = quantileSorted(s, 0.50);
+    hi[t]  = quantileSorted(s, 0.95);
+  }
+  return {lo, med, hi, terminalReturns};
+}
+
+// ---------------------------
+// Display transforms for view modes
+// ---------------------------
+function transformPricesTo(mode, prices){
+  if(!prices) return null;
+  if(mode==='price') return prices.slice();
+  if(mode==='logprice') return prices.map(p => (isFinite(p) && p>0) ? Math.log(p) : NaN);
+  // returns modes handled separately (need previous)
+  return prices.slice();
+}
+function returnsFromPrices(prices, kind){
+  // kind: 'ret' or 'logret'
+  const out = new Array(prices.length).fill(null);
+  for(let i=1;i<prices.length;i++){
+    const p0=prices[i-1], p1=prices[i];
+    if(!isFinite(p0) || !isFinite(p1) || p0<=0 || p1<=0) { out[i]=null; continue; }
+    out[i] = (kind==='logret') ? Math.log(p1/p0) : (p1/p0 - 1);
+  }
+  return out;
+}
+
+// ---------------------------
+// Chart builders / updaters
+// ---------------------------
+function buildMainChart(){
+  if(!(_labels && _histMonthlyPrices && _forecastPrices)) return;
+
+  const viewMode = document.getElementById('viewMode').value;
+
+  // Build full price arrays aligned to labels
+  const L = _labels.length;
+  const histLen = _histLen;
+  const detFull = new Array(L).fill(null);
+  const scenFull = new Array(L).fill(null);
+
+  // deterministic: history for 0..histLen-1, forecast for histLen-1..end
+  for(let i=0;i<histLen;i++) detFull[i] = _histMonthlyPrices[i];
+  for(let k=0;k<_forecastPrices.length;k++){
+    const idx = (histLen-1) + k;
+    detFull[idx] = _forecastPrices[k];
+  }
+
+  // single scenario (for toggle path)
+  const scenForecast = _forecastPrices.map((p,i)=> p * ((_volPath||[])[i] || 1));
+  for(let i=0;i<histLen;i++) scenFull[i] = _histMonthlyPrices[i];
+  for(let k=0;k<scenForecast.length;k++){
+    const idx = (histLen-1) + k;
+    scenFull[idx] = scenForecast[k];
+  }
+
+  // Prepare datasets depending on view mode
+  let histSeries = new Array(L).fill(null);
+  let detSeries  = new Array(L).fill(null);
+  let scenSeries = new Array(L).fill(null);
+
+  let yTick = (v)=> v;
+  let yTitle = '';
+  let yMin = undefined;
+
+  const labelHist = (viewMode==='price' || viewMode==='logprice') ? 'Historical (monthly, last 3Y)' : 'Historical (monthly) — returns';
+  const labelDet  = (viewMode==='price' || viewMode==='logprice') ? 'Deterministic trend (3Y)' : 'Implied forward returns — deterministic';
+  const labelScen = (viewMode==='price' || viewMode==='logprice') ? 'Scenario path (endpoint-anchored)' : 'Implied forward returns — scenario';
+
+  if(viewMode==='price' || viewMode==='logprice'){
+    const detT = transformPricesTo(viewMode, detFull);
+    const scenT = transformPricesTo(viewMode, scenFull);
+
+    // historical segment only
+    for(let i=0;i<histLen;i++) histSeries[i] = detT[i];
+
+    // forecast segment (starting at histLen-1)
+    for(let i=histLen-1;i<L;i++){
+      detSeries[i] = detT[i];
+      scenSeries[i] = scenT[i];
+    }
+
+    if(viewMode==='price'){
+      yTick = (v)=> '$'+fmtUSD(v);
+      const minV = Math.min(...detFull.filter(x=>x!==null), ..._forecastPrices);
+      yMin = Math.max(0, Math.floor((minV||0)/1000)*1000);
+      yTitle = 'USD/BTC';
+    } else {
+      yTick = (v)=> isFinite(v) ? v.toFixed(2) : '';
+      yMin = undefined;
+      yTitle = 'ln(P)';
+    }
+  } else {
+    // returns: compute from full price arrays
+    const histR = returnsFromPrices(detFull.slice(0,histLen), viewMode); // includes null[0]
+    for(let i=0;i<histLen;i++) histSeries[i] = histR[i];
+
+    const detRFull = returnsFromPrices(detFull, viewMode);
+    const scenRFull = returnsFromPrices(scenFull, viewMode);
+
+    // forward returns start at histLen (return from last hist to first forward)
+    for(let i=histLen;i<L;i++){
+      detSeries[i] = detRFull[i];
+      scenSeries[i] = scenRFull[i];
+    }
+
+    yTick = (v)=> isFinite(v) ? (100*v).toFixed(2)+'%' : '';
+    yMin = undefined;
+    yTitle = (viewMode==='ret') ? 'Simple return' : 'Log return';
+  }
+
+  // Build chart (destroy & recreate to cleanly swap axis formatting)
   if(window._btcChart) window._btcChart.destroy();
   const ctx=document.getElementById('chart');
+
   window._btcChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels:_labels,
+      datasets:[
+        {
+          label: labelHist,
+          data: histSeries,
+          borderColor: 'rgba(122,162,255,0.95)',
+          tension: .18,
+          pointRadius: 0,
+          spanGaps: true
+        },
+        {
+          label: labelDet,
+          data: detSeries,
+          borderColor: 'rgba(43,179,166,0.95)',
+          tension: .18,
+          pointRadius: 0,
+          spanGaps: true
+        },
+        {
+          label: labelScen,
+          data: scenSeries,
+          borderColor: 'rgba(214,178,92,0.95)',
+          borderDash: [6,4],
+          tension: .22,
+          pointRadius: 0,
+          spanGaps: true,
+          hidden: false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{ labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7' } },
+        tooltip:{
+          callbacks:{
+            label: (ctx)=>{
+              const v = ctx.parsed.y;
+              if(v===null || v===undefined || !isFinite(v)) return ctx.dataset.label + ': —';
+              if(viewMode==='price') return `${ctx.dataset.label}: $${fmtUSD(v)}`;
+              if(viewMode==='logprice') return `${ctx.dataset.label}: ${v.toFixed(3)}`;
+              return `${ctx.dataset.label}: ${(100*v).toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales:{
+        y:{
+          min: yMin,
+          title:{ display:true, text:yTitle, color:getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#9aa8bf' },
+          ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', callback:yTick },
+          grid:{ display:false }
+        },
+        x:{
+          ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', autoSkip:false, callback:(v,i)=> short6MLabel(_labels[i]) },
+          grid:{ display:false }
+        }
+      }
+    }
+  });
+}
+
+function updateScenarioPathOnly(){
+  if(!_forecastPrices || !_labels) return;
+
+  const level = parseFloat(document.getElementById('volLevel').value);
+  document.getElementById('volLevelVal').textContent = level.toFixed(2)+'×';
+
+  const T=_forecastPrices.length-1;
+  const B=brownianBridgeStd(T);
+  const s = (_sigmaMonthly||0.1)*level;
+  const path = B.map(v=> Math.exp(s*v));
+  path[0]=1; path[T]=1;
+  _volPath = path;
+
+  // Update main chart (dataset 2) without full rebuild if possible
+  if(window._btcChart){
+    const viewMode = document.getElementById('viewMode').value;
+    // easiest: rebuild main chart to keep transforms consistent across view modes
+    // (still lightweight: 72 points)
+    buildMainChart();
+  }
+}
+
+function buildResidualChart(fit, seriesDates){
+  // residuals in log space: y - yhat
+  if(window._residChart) window._residChart.destroy();
+  const ctx=document.getElementById('residChart');
+
+  const n = fit.y.length;
+  const maxPts = 420;
+  const stride = Math.max(1, Math.ceil(n / maxPts));
+
+  const labels = [];
+  const data = [];
+  for(let i=0;i<n;i+=stride){
+    labels.push(isoYYYYMM(seriesDates[i]));
+    data.push(fit.y[i] - fit.yhat[i]);
+  }
+
+  window._residChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'Residuals ε(t) in log space',
+        data,
+        borderColor:'rgba(122,162,255,0.95)',
+        pointRadius:0,
+        tension:.15
+      }]
+    },
+    options:{
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{ legend:{ labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7'} } },
+      scales:{
+        x:{ grid:{display:false}, ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', maxTicksLimit:8 } },
+        y:{ grid:{display:false}, ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', callback:(v)=> (isFinite(v)? v.toFixed(3):'') } }
+      }
+    }
+  });
+}
+
+function buildFanChart(labels, lo, med, hi, viewMode){
+  if(window._fanChart) window._fanChart.destroy();
+  const ctx=document.getElementById('fanChart');
+
+  // fan chart on forecast segment only (T+1 points)
+  let loT=lo, medT=med, hiT=hi;
+  let yTick=(v)=>v, yTitle='USD/BTC';
+
+  if(viewMode==='logprice'){
+    loT = lo.map(p=>Math.log(p));
+    medT = med.map(p=>Math.log(p));
+    hiT = hi.map(p=>Math.log(p));
+    yTick = (v)=> isFinite(v) ? v.toFixed(2) : '';
+    yTitle = 'ln(P)';
+  } else if(viewMode==='ret' || viewMode==='logret'){
+    // show cumulative return fan for return views (horizon path vs join price)
+    const base = _forecastPrices[0];
+    const cumFromPrices = (arr)=> arr.map(p => (viewMode==='logret') ? Math.log(p/base) : (p/base - 1));
+    loT = cumFromPrices(lo);
+    medT = cumFromPrices(med);
+    hiT = cumFromPrices(hi);
+    yTick = (v)=> isFinite(v) ? (100*v).toFixed(2)+'%' : '';
+    yTitle = (viewMode==='ret') ? 'Cumulative return' : 'Cumulative log return';
+  } else {
+    yTick = (v)=> '$'+fmtUSD(v);
+    yTitle = 'USD/BTC';
+  }
+
+  window._fanChart = new Chart(ctx, {
     type:'line',
     data:{
       labels,
       datasets:[
-        { label:`Historical (monthly, last 3y)`, data: histData.concat(new Array(forecast.length-1).fill(null)), borderColor:'#60a5fa', tension:.2, pointRadius:0, spanGaps:true },
-        { label:'Gompertz (next 3y)', data: new Array(histData.length-1).fill(null).concat(forecast), borderColor:'#69d5a5', tension:.2, pointRadius:0, spanGaps:true },
-        { label:'Volatile path (Brownian bridge)', data: new Array(histData.length-1).fill(null).concat(forecast.map((p,i)=> p*((_volPath||[])[i]||1))), borderColor:'#f6c833', borderDash:[6,4], tension:.25, pointRadius:0, hidden:false, spanGaps:true }
+        {
+          label:'Upper (95th)',
+          data: hiT,
+          borderColor:'rgba(122,162,255,0.00)',
+          backgroundColor:'rgba(122,162,255,0.18)',
+          pointRadius:0,
+          tension:.18
+        },
+        {
+          label:'Lower (5th)',
+          data: loT,
+          borderColor:'rgba(122,162,255,0.00)',
+          backgroundColor:'rgba(122,162,255,0.18)',
+          fill: '-1',
+          pointRadius:0,
+          tension:.18
+        },
+        {
+          label:'Median (50th)',
+          data: medT,
+          borderColor:'rgba(43,179,166,0.95)',
+          pointRadius:0,
+          tension:.18
+        }
       ]
     },
     options:{
-      responsive:true, interaction:{mode:'index',intersect:false},
-      plugins:{ legend:{ labels:{ color:'#cdd5e7'} } },
+      responsive:true,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{ labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7' } },
+        tooltip:{
+          callbacks:{
+            label:(ctx)=>{
+              const v=ctx.parsed.y;
+              if(v===null || v===undefined || !isFinite(v)) return ctx.dataset.label+': —';
+              if(viewMode==='price') return `${ctx.dataset.label}: $${fmtUSD(v)}`;
+              if(viewMode==='logprice') return `${ctx.dataset.label}: ${v.toFixed(3)}`;
+              return `${ctx.dataset.label}: ${(100*v).toFixed(2)}%`;
+            }
+          }
+        }
+      },
       scales:{
-        y:{ min:yMinRounded, ticks:{ color:'#cdd5e7', callback:(v)=>'$'+fmtUSD(v)}, grid:{display:false} },
-        x:{ ticks:{ color:'#cdd5e7', autoSkip:false, callback:(v,i)=> short6MLabel(labels[i]) }, grid:{display:false} }
+        x:{ grid:{display:false}, ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', maxTicksLimit:7 } },
+        y:{
+          grid:{display:false},
+          title:{ display:true, text:yTitle, color:getComputedStyle(document.documentElement).getPropertyValue('--muted') || '#9aa8bf' },
+          ticks:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', callback:yTick }
+        }
       }
     }
   });
-
-  // Update stats & diagnostics
-  updateStatsOnly({ts, prices, sd, monthsPerUnit});
-  buildDiagnostics(fit);
-  document.getElementById('status').textContent = `Freq: ${freq}`;
 }
 
-function buildDiagnostics(fit){
-  if(window._sseChart) window._sseChart.destroy();
-  const sseCtx=document.getElementById('sseChart');
-  window._sseChart = new Chart(sseCtx, {
-    type:'line',
-    data:{ labels: fit.dGrid.map(d=>d.toFixed(3)), datasets:[{ label:'Loss(d)', data: fit.lossGrid, borderColor:'#60a5fa', pointRadius:0, tension:.15 }]},
-    options:{ responsive:true, plugins:{legend:{labels:{color:'#cdd5e7'}}}, scales:{ x:{grid:{display:false}, ticks:{color:'#cdd5e7', maxTicksLimit:10}}, y:{grid:{display:false}, ticks:{color:'#cdd5e7'}} } }
-  });
+// ---------------------------
+// UI metric updates
+// ---------------------------
+function updateSummaryPanel(){
+  const freq = document.getElementById('freq').value;
+  const series = seriesForFreq(freq);
+  if(!series || series.length<10) return;
 
-  if(window._yzChart) window._yzChart.destroy();
-  const yzCtx=document.getElementById('yzChart');
-  const z = fit.z, y = fit.y;
-  const beta = fit.beta;
-  const pairs=z.map((zi,i)=>({x:zi,y:y[i]})).filter(p=>p.x!==undefined).sort((a,b)=>a.x-b.x);
-  const zSorted = pairs.map(p=>p.x);
-  const yhatLine = zSorted.map(zi => beta*zi);
-  window._yzChart = new Chart(yzCtx, {
-    type:'scatter',
-    data:{ datasets:[
-      { label:'y vs z_d (points)', data:pairs, borderColor:'#f6c833', backgroundColor:'#f6c833', pointRadius:2, showLine:false },
-      { label:'ŷ = β z_d (fit line)', data: zSorted.map((zi,i)=>({x:zi,y:yhatLine[i]})), borderColor:'#69d5a5', pointRadius:0, showLine:true, type:'line' }
-    ]},
-    options:{ responsive:true, plugins:{legend:{labels:{color:'#cdd5e7'}}}, scales:{ x:{grid:{display:false}, ticks:{color:'#cdd5e7'}}, y:{grid:{display:false}, ticks:{color:'#cdd5e7'}} } }
-  });
+  const stats = calcSummaryStats(series, freq);
+  const rf = (parseFloat(document.getElementById('rf').value)||0)/100;
+
+  const mu = stats.muAnn;
+  const sig = stats.sigAnn;
+  const sharpe = (isFinite(mu) && isFinite(sig) && sig>0) ? ((mu - rf)/sig) : NaN;
+
+  document.getElementById('muHat').textContent = fmtPct(mu, 2) + ' (ann.)';
+  document.getElementById('sigHat').textContent = fmtPct(sig, 2) + ' (ann.)';
+  document.getElementById('sharpe').textContent = isFinite(sharpe) ? sharpe.toFixed(2) : '—';
+  document.getElementById('mdd').textContent = isFinite(stats.mdd) ? (100*stats.mdd).toFixed(2)+'%' : '—';
+  document.getElementById('skew').textContent = fmtNum(stats.sk, 2);
+  document.getElementById('exkurt').textContent = fmtNum(stats.exk, 2);
+
+  const firstDate = series[0].date.toISOString().slice(0,10);
+  const lastDate = series[series.length-1].date.toISOString().slice(0,10);
+  document.getElementById('summaryNote').textContent =
+    `Series window: ${firstDate} → ${lastDate} | Observations: ${stats.n} | Periods/year: ${stats.ppy.toFixed(2)} (365-day convention)`;
 }
 
-// ---- CV cache key
-function cvKey(freq, n){ return `ols|l2|single|${freq}|${n}`; }
-
-// ---- Update stats only (no chart rebuild)
-function updateStatsOnly(ctx){
-  const {ts, prices, sd, monthsPerUnit} = ctx || deriveContextFromUI();
-  // fit if missing
-  let fit = _fit;
-  if (!fit) { fit = fitSingle(ts, prices); _fit = fit; }
-  const unitName = unitNameFor(document.getElementById('freq').value);
+function updateModelPanel(ctx){
+  const {ts, prices, sd, monthsPerUnit, seriesDates} = ctx;
+  const freq=document.getElementById('freq').value;
+  const unitName = unitNameFor(freq);
 
   // CV (memoized)
-  const key = cvKey(document.getElementById('freq').value, prices.length);
+  const key = cvKey(freq, prices.length);
   let cv = _cacheCV.get(key);
   if (!cv) { cv = computeCV(ts, prices); _cacheCV.set(key, cv); }
+
+  const fit = _fit;
 
   // IC weights vs null
   const nullFit = fitNull(ts, prices);
@@ -364,36 +1346,134 @@ function updateStatsOnly(ctx){
   const bic_w = IC_weight(fit.BIC, nullFit.BIC);
   const ic_weight = 0.5*(aic_w + bic_w);
 
-  // Predictive grade (0–100) — emphasize CV RMSE, with folds adjustment
+  // Predictive grade (0–100): emphasize CV RMSE, adjust by folds
   const r2_score = clamp01(fit.r2);
-  const denom = sd || 1e-6; // returns stdev per frequency
+  const denom = sd || 1e-6;
   const rmse_score = clamp01(1 - (cv.rmseLog || 0)/denom);
   const base = (0.6*rmse_score + 0.3*r2_score + 0.1*ic_weight);
   const baselineFolds = 12;
-  const adj = Math.max(0.4, Math.min(1, Math.sqrt((cv.folds||1)/baselineFolds))); // 0.4–1.0
-  const grade = Math.round(100*base*adj);
+  const foldsAdj = Math.max(0.4, Math.min(1, Math.sqrt((cv.folds||1)/baselineFolds)));
+  const grade = Math.round(100*base*foldsAdj);
 
   // Convert g,d to monthly
   const g_month = fit.g / monthsPerUnit;
   const d_month = fit.d / monthsPerUnit;
 
-  // Update panel
+  // Regression inference
+  const inf = regressionInference(fit);
+
+  // Update model panel IDs
   document.getElementById('p0').textContent = '$'+fmtUSD(prices[0]);
-  document.getElementById('pend').textContent = (window._forecast && window._forecast[0]) ? '$'+fmtUSD(window._forecast[0]) : '—';
+  document.getElementById('pend').textContent = (_lastJoinPrice!=null) ? '$'+fmtUSD(_lastJoinPrice) : '—';
+
+  document.getElementById('sig_freq').textContent = (sd*100).toFixed(2)+'% / '+unitName;
+  document.getElementById('sig_month').textContent = ((sd*Math.sqrt(1/monthsPerUnit))*100).toFixed(2)+'% / month';
+
+  document.getElementById('betaHat').textContent = isFinite(inf.beta) ? inf.beta.toFixed(4) : '—';
+  document.getElementById('seBeta').textContent = isFinite(inf.se) ? inf.se.toFixed(4) : '—';
+  document.getElementById('tStat').textContent = isFinite(inf.t) ? inf.t.toFixed(2) : '—';
+  document.getElementById('pVal').textContent = isFinite(inf.pApprox) ? inf.pApprox.toFixed(4) : '—';
+
+  document.getElementById('r2').textContent = (fit.r2||0).toFixed(3);
+  document.getElementById('adjr2').textContent = isFinite(inf.adjR2) ? inf.adjR2.toFixed(3) : '—';
+  document.getElementById('rmse').textContent = (cv.rmseLog||NaN).toFixed(4);
+  document.getElementById('aicbic').textContent = fit.AIC.toFixed(0)+' / '+fit.BIC.toFixed(0);
+
   document.getElementById('gp_freq').textContent = (fit.g*100).toFixed(2)+'%';
   document.getElementById('dp_freq').textContent = (fit.d*100).toFixed(2)+'%';
   document.getElementById('gp_month').textContent = (g_month*100).toFixed(2)+'%';
   document.getElementById('dp_month').textContent = (d_month*100).toFixed(2)+'%';
   document.getElementById('hl_freq').textContent = (Math.log(2)/fit.d).toFixed(1)+' '+unitName;
-  document.getElementById('r2').textContent = (fit.r2||0).toFixed(3);
-  document.getElementById('rmse').textContent = (cv.rmseLog||NaN).toFixed(4);
-  document.getElementById('sig_freq').textContent = (sd*100).toFixed(2)+'% / '+unitName;
-  document.getElementById('sig_month').textContent = ((sd*Math.sqrt(1/monthsPerUnit))*100).toFixed(2)+'% / month';
-  document.getElementById('aicbic').textContent = fit.AIC.toFixed(0)+' / '+fit.BIC.toFixed(0);
-  document.getElementById('adj').textContent = '×'+adj.toFixed(2)+` (folds=${cv.folds})`;
-  document.getElementById('grade').textContent = grade+'/100';
 
-  document.getElementById('status').textContent = `Updated stats | Folds: ${cv.folds}`;
+  document.getElementById('grade').textContent = grade+'/100';
+  document.getElementById('adj').textContent = `×${foldsAdj.toFixed(2)} (folds=${cv.folds})`;
+
+  // diagnostics charts
+  buildDiagnosticsCharts(fit, seriesDates);
+
+  // status
+  document.getElementById('status').textContent = `Estimation: ${freq} | View: ${document.getElementById('viewMode').value}`;
+}
+
+function buildDiagnosticsCharts(fit, seriesDates){
+  // SSE chart
+  if(window._sseChart) window._sseChart.destroy();
+  const sseCtx=document.getElementById('sseChart');
+  window._sseChart = new Chart(sseCtx, {
+    type:'line',
+    data:{
+      labels: fit.dGrid.map(d=>d.toFixed(3)),
+      datasets:[{
+        label:'SSE(d)',
+        data: fit.lossGrid,
+        borderColor:'rgba(122,162,255,0.95)',
+        pointRadius:0,
+        tension:.15
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7'} } },
+      scales:{
+        x:{grid:{display:false}, ticks:{color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7', maxTicksLimit:10}},
+        y:{grid:{display:false}, ticks:{color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7'}}
+      }
+    }
+  });
+
+  // y vs z scatter
+  if(window._yzChart) window._yzChart.destroy();
+  const yzCtx=document.getElementById('yzChart');
+  const z = fit.z, y = fit.y;
+  const beta = fit.beta;
+  const pairs=z.map((zi,i)=>({x:zi,y:y[i]})).filter(p=>p.x!==undefined).sort((a,b)=>a.x-b.x);
+  const zSorted = pairs.map(p=>p.x);
+  const yhatLine = zSorted.map(zi => beta*zi);
+
+  window._yzChart = new Chart(yzCtx, {
+    type:'scatter',
+    data:{
+      datasets:[
+        { label:'Observed (y vs z)', data:pairs, borderColor:'rgba(214,178,92,0.95)', backgroundColor:'rgba(214,178,92,0.75)', pointRadius:2, showLine:false },
+        { label:'Fit line ŷ = β z', data: zSorted.map((zi,i)=>({x:zi,y:yhatLine[i]})), borderColor:'rgba(43,179,166,0.95)', pointRadius:0, showLine:true, type:'line' }
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{ legend:{ labels:{ color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7'} } },
+      scales:{
+        x:{grid:{display:false}, ticks:{color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7'}},
+        y:{grid:{display:false}, ticks:{color:getComputedStyle(document.documentElement).getPropertyValue('--muted2') || '#cdd5e7'}}
+      }
+    }
+  });
+
+  // residual chart
+  buildResidualChart(fit, seriesDates);
+}
+
+// ---------------------------
+// Core build pipeline
+// ---------------------------
+async function loadLive(){
+  const status=document.getElementById('status');
+  status.textContent='Loading full-history data…';
+  try{
+    const daily=to2018Daily(await tryCG());
+    status.textContent='Loaded from CoinGecko.';
+    DAILIES=daily; WEEKLIES=toWeekly(daily); MONTHLIES=toMonthly(daily); ANNUALS=toAnnual(daily);
+    buildAll();
+  }
+  catch(e1){
+    try{
+      const daily=to2018Daily(await tryCC());
+      status.textContent='Loaded from CryptoCompare.';
+      DAILIES=daily; WEEKLIES=toWeekly(daily); MONTHLIES=toMonthly(daily); ANNUALS=toAnnual(daily);
+      buildAll();
+    } catch(e2){
+      status.textContent='Data unavailable (APIs blocked).';
+    }
+  }
 }
 
 function deriveContextFromUI(){
@@ -404,73 +1484,130 @@ function deriveContextFromUI(){
   const monthsPerUnit = monthsPerUnitFor(freq);
   const ts = series.map(pt=> tFunc(t0, pt.date));
   const prices = series.map(pt=> pt.price);
-  const rets=[]; for(let i=1;i<series.length;i++) rets.push(Math.log(series[i].price/series[i-1].price));
-  const mean=rets.reduce((a,b)=>a+b,0)/rets.length;
-  const sd=Math.sqrt(rets.reduce((s,x)=> s + (x-mean)*(x-mean), 0)/rets.length);
-  return {ts, prices, sd, monthsPerUnit};
+  const seriesDates = series.map(pt=> pt.date);
+
+  // baseline volatility from log returns (per selected frequency)
+  const rets=[];
+  for(let i=1;i<series.length;i++) rets.push(Math.log(series[i].price/series[i-1].price));
+  const sd=stdev(rets);
+
+  return {ts, prices, sd, monthsPerUnit, seriesDates};
 }
 
-// Akaike/Bayes weight vs null; returns weight for current model
-function IC_weight(AIC_curr, AIC_null){
-  const d = AIC_curr - AIC_null;
-  const wCurr = Math.exp(-0.5*Math.max(0,d));
-  const wNull = Math.exp(-0.5*Math.max(0,-d));
-  return wCurr / (wCurr + wNull);
+function buildAll(){
+  const freq=document.getElementById('freq').value;
+  const series = seriesForFreq(freq);
+  if(!series || series.length<50) return;
+
+  const {ts, prices, sd, monthsPerUnit, seriesDates} = deriveContextFromUI();
+
+  // Fit (unchanged)
+  const fit = fitSingle(ts, prices);
+  _fit=fit;
+
+  // Monthly volatility baseline via sqrt(time) mapping
+  const periodsPerMonth = 1/monthsPerUnit;
+  _sigmaMonthly = sd * Math.sqrt(periodsPerMonth);
+
+  // Main chart uses last 36 months + 36 forward (monthly display)
+  const monthlyHist = MONTHLIES.slice(-36);
+  const lastPoint = monthlyHist[monthlyHist.length-1];
+  _lastJoinPrice = lastPoint.price;
+
+  const g_month = fit.g / monthsPerUnit;
+  const d_month = fit.d / monthsPerUnit;
+
+  const projMonthly = gompertzSeries(lastPoint.price, g_month, d_month, HORIZON_MONTHS); // length 37
+  _histMonthlyPrices = monthlyHist.map(pt=> pt.price);
+  _forecastPrices = projMonthly.slice(); // includes join as [0]
+  _histLen = _histMonthlyPrices.length;
+
+  // Labels: last 36 months + next 36 months (monthly)
+  _labels = monthlyHist.map(pt=> pt.date.toISOString().slice(0,10)).concat(
+    Array.from({length:HORIZON_MONTHS},(_,i)=> new Date(lastPoint.date.getFullYear(), lastPoint.date.getMonth()+i+1,1).toISOString().slice(0,10))
+  );
+
+  // Update summary stats (selected frequency series)
+  updateSummaryPanel();
+
+  // Build / rebuild scenario path (single) then main chart
+  updateScenarioPathOnly();
+  buildMainChart();
+
+  // Fan + risk metrics (N=200)
+  recomputeFanAndRisk();
+
+  // Update model panel + diagnostics
+  updateModelPanel({ts, prices, sd, monthsPerUnit, seriesDates});
 }
 
-// Time-series cross-validation: rolling-origin 1-step-ahead RMSE on log-price (OLS/SSE)
-function computeCV(ts, prices){
-  const n = prices.length;
-  if (n<40) return {rmseLog: NaN, folds: 0};
-  const minTrain = Math.max(24, Math.floor(n*0.3));
-  const maxFolds = 12;
-  const step = Math.max(1, Math.floor((n - (minTrain+2)) / maxFolds));
-  const errs=[]; let folds=0;
-  for (let idx=minTrain; idx<=n-2; idx+=step){
-    const tsTrain = ts.slice(0, idx+1);
-    const prTrain = prices.slice(0, idx+1);
-    const tsNext = ts[idx+1];
-    const f = fitSingle(tsTrain, prTrain);
-    const g = f.g, d = f.d, P0 = prTrain[0];
-    const yhat_next = (g/d) * (1 - Math.exp(-d*tsNext));
-    const Phat_next = P0 * Math.exp(yhat_next);
-    const e = Math.log(prices[idx+1]) - Math.log(Phat_next);
-    errs.push(e);
-    folds++;
-  }
-  const mse = errs.reduce((s,x)=> s + x*x, 0) / errs.length;
-  return {rmseLog: Math.sqrt(mse), folds};
-}
+function recomputeFanAndRisk(){
+  if(!_forecastPrices) return;
 
-// Brownian bridge volatility
-function brownianBridgeStd(T){ const z = Array.from({length:T}, ()=> gaussian()); const W=[0]; let c=0; for (let i=0;i<T;i++){ c+=z[i]; W.push(c);} const WT=W[T]; const B=W.map((w,t)=> w - (t/T)*WT); const scl=Math.sqrt(T); const out=B.map(v=>v/(scl||1)); out[0]=0; out[T]=0; return out; }
-function gaussian(){ let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
-
-function regenVolPath(forceNew=false){
-  if(!_forecast) return;
   const level = parseFloat(document.getElementById('volLevel').value);
-  document.getElementById('volLevelVal').textContent = level.toFixed(2)+'×';
-  const T=_forecast.length-1;
-  const B=brownianBridgeStd(T);
-  const s = (_sigmaMonthly||0.1)*level;
-  const path = B.map(v=> Math.exp(s*v));
-  path[0]=1; path[T]=1;
-  _volPath = path;
+  const sMonthly = (_sigmaMonthly||0.1) * level;
+
+  const {lo, med, hi, terminalReturns} = simulateFan(N_FAN, sMonthly, _forecastPrices);
+  _fan = {lo, med, hi};
+  _simReturns = terminalReturns;
+
+  // Risk metrics (VaR/CVaR at alpha)
+  const alpha = parseFloat(document.getElementById('varAlpha').value) || 0.95;
+  const {varLoss, cvarLoss} = calcVaRCVaR(_simReturns, alpha);
+
+  document.getElementById('varH').textContent = isFinite(varLoss) ? (100*varLoss).toFixed(2)+'%' : '—';
+  document.getElementById('cvarH').textContent = isFinite(cvarLoss) ? (100*cvarLoss).toFixed(2)+'%' : '—';
+
+  // Terminal percentiles
+  const termLo = lo[lo.length-1], termMed = med[med.length-1], termHi = hi[hi.length-1];
+  document.getElementById('termPct').textContent =
+    (isFinite(termLo)&&isFinite(termMed)&&isFinite(termHi)) ? `$${fmtUSD(termLo)} / $${fmtUSD(termMed)} / $${fmtUSD(termHi)}` : '—';
+
+  // Fan chart labels (forecast segment labels): join label + next 36 monthly labels
+  const forecastLabels = [_labels[_histLen-1]].concat(_labels.slice(_histLen));
+  const viewMode = document.getElementById('viewMode').value;
+  buildFanChart(forecastLabels, lo, med, hi, viewMode);
 }
-function refreshVol(){ if(!window._btcChart) return; const ds = window._btcChart.data.datasets[2]; ds.data=new Array(_histLen-1).fill(null).concat(_forecast.map((p,i)=> p*((_volPath||[])[i]||1))); window._btcChart.update(); }
 
-// Ticks: show every 6 months (1/YY, 7/YY)
-function short6MLabel(iso){ const d=new Date(iso); const m=d.getMonth(); if(m===0||m===6) return (m+1)+'/'+String(d.getFullYear()).slice(-2); return ''; }
-
+// ---------------------------
 // UI events
-document.getElementById('volLevel').addEventListener('input', ()=>{ regenVolPath(); refreshVol(); });
-document.getElementById('btnRandom').addEventListener('click', ()=>{ regenVolPath(true); refreshVol(); });
-document.getElementById('btnToggle').addEventListener('click', (e)=>{ const ds=window._btcChart?.data.datasets[2]; if(!ds) return; ds.hidden=!ds.hidden; e.target.textContent=ds.hidden?'Show Volatility':'Hide Volatility'; window._btcChart.update(); });
+// ---------------------------
+document.getElementById('volLevel').addEventListener('input', ()=>{
+  updateScenarioPathOnly();
+  recomputeFanAndRisk();
+});
+document.getElementById('btnRandom').addEventListener('click', ()=>{
+  updateScenarioPathOnly();   // new bridge draw for the visible scenario path
+  recomputeFanAndRisk();      // new Monte Carlo draws for distribution layer
+});
+document.getElementById('btnToggle').addEventListener('click', ()=>{
+  const ds=window._btcChart?.data.datasets[2];
+  if(!ds) return;
+  ds.hidden = !ds.hidden;
+  window._btcChart.update();
+});
 document.getElementById('btnReload').addEventListener('click', ()=>{ loadLive(); });
-document.getElementById('btnReloadStats').addEventListener('click', ()=>{ updateStatsOnly(); });
-['freq'].forEach(id=> document.getElementById(id).addEventListener('change', ()=>{ buildAll(); }) );
+document.getElementById('btnReloadStats').addEventListener('click', ()=>{
+  updateSummaryPanel();
+  if(_fit){
+    const ctx = deriveContextFromUI();
+    _fit = fitSingle(ctx.ts, ctx.prices);
+    updateModelPanel(ctx);
+    recomputeFanAndRisk();
+    buildMainChart();
+  }
+});
+document.getElementById('freq').addEventListener('change', ()=>{ buildAll(); });
+document.getElementById('viewMode').addEventListener('change', ()=>{
+  buildMainChart();
+  recomputeFanAndRisk();
+});
+document.getElementById('rf').addEventListener('input', ()=>{ updateSummaryPanel(); });
+document.getElementById('varAlpha').addEventListener('change', ()=>{ recomputeFanAndRisk(); });
 
+// ---------------------------
 // Load
+// ---------------------------
 window.addEventListener('DOMContentLoaded', ()=>{ loadLive(); });
 </script>
 </body>
